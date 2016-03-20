@@ -66,8 +66,13 @@
       [:tr [:td "Prereqs"]
            [:td (html-multiselect "prereq" (map :id all-rows)
                                   (map :title all-rows) (:prereq row))]]
-      [:tr [:td "Description"]
-           [:td [:textarea {:name "descr"} (:descr row)]]]
+      [:tr [:td [:u "Description"]]] ; Note: non-idiomatic underscores to
+      [:tr [:td "- What it does"]    ; accommodate database requirements
+           [:td [:textarea {:name "desc_is"} (:desc_is row)]]]
+      [:tr [:td "- What it does"]
+           [:td [:textarea {:name "desc_does"} (:desc_does row)]]]
+      [:tr [:td "- How to use it"]
+           [:td [:textarea {:name "desc_use"} (:desc_use row)]]]
       [:tr [:td "Examples"]
            [:td [:textarea {:name "example"} (:example row)]]]
       [:tr [:td "Comments"]
@@ -135,7 +140,10 @@
       (seq [[:br] [:font {:color "red"} (newline-to-br (:comm row))] [:br]]))
     [:br] [:b "Prerequisites"] [:br] ; TODO: alphabetize
     (map row-to-html-link (map get-row (:prereq row)))
-    [:br] [:b "Description"] [:br] (newline-to-br (:descr row)) [:br]
+    [:br] [:b "Description"]
+    [:br] "What it is: " (newline-to-br (:desc_is row)) [:br]
+    [:br] "What it does: " (newline-to-br (:desc_does row)) [:br]
+    [:br] "How to use it: " (newline-to-br (:desc_use row)) [:br]
     [:br] [:b "Examples"] [:br] (newline-to-br (:example row))))
 
 (defn process-form-page [task raw-form-data]
