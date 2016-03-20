@@ -67,7 +67,7 @@
            [:td (html-multiselect "prereq" (map :id all-rows)
                                   (map :title all-rows) (:prereq row))]]
       [:tr [:td [:u "Description"]]] ; Note: non-idiomatic underscores to
-      [:tr [:td "- What it does"]    ; accommodate database requirements
+      [:tr [:td "- What it is"]      ; accommodate database requirements
            [:td [:textarea {:name "desc_is"} (:desc_is row)]]]
       [:tr [:td "- What it does"]
            [:td [:textarea {:name "desc_does"} (:desc_does row)]]]
