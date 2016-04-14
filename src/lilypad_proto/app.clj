@@ -58,7 +58,7 @@
     (map html-option values texts is-defaults)])
 
 (defn html-form ([hidden] (html-form -1 hidden)) ([id hidden] 
-  (def all-rows (get-all-rows))
+  (def all-rows (sort-by :title (get-all-rows))) ; Sort for multiselect.
   (def row (get-row id))                     ;
   [:form {:action "/process" :method "POST"} ; No id means no defaults, since
     [:table                                  ; (get-row -1) -> nil.
