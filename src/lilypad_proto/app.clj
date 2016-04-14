@@ -7,9 +7,10 @@
                       (:gen-class))
 
 (def DB (or (System/getenv "DATABASE_URL")
-            "postgresql://localhost:5432/lilypad-proto"))
+            "postgresql://localhost:5432/lilypad"))
 (def TABLE "nodes")
 (def TABLE_KEY :nodes)
+(def INDENT_SIZE 2)
 
 (extend-protocol sql/IResultSetReadColumn    ;
   org.postgresql.jdbc4.Jdbc4Array            ; From SO #6055629
@@ -114,7 +115,7 @@
   (page/html5 (page-head "Home")
     [:h2 "LILYPAD"]
     (html-button-link "New Node" "add")
-    [:p] (map row-to-html-link (get-all-rows))))
+    [:p] (map row-to-html-link (sort-by :title (get-all-rows)))))
 
 (defn add-node-page []
   (page/html5 (page-head "New node")
@@ -150,7 +151,7 @@
   ; Ensure that a lone prereq is still a vector (not a string).
   (def form-data (update raw-form-data :prereq vec))
   (def task-name (first (split task #" ")))
-  (def id        (last  (split task #" "))) ; If task is 1 word, id = task-name.
+  (def id        (last  (split task #" "))) ; If task 1 word, id = task-name.
   (case task-name
     "add"    (page/html5 (html-redir (add-node form-data)))
     "edit"   (do (edit-node id form-data) (page/html5 (html-redir id)))
