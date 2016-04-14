@@ -122,7 +122,9 @@
   (page/html5 (html-page-head "Home")
     [:h2 "LILYPAD"]
     (html-button-link "New Node" "add")
-    [:p] (map row-to-html-link (sort-by :title (get-all-rows)))))
+    [:p] 
+;    (map row-to-html-link (sort-by :title (get-all-rows))) ; No indents
+    (html-recursively-nest-nodes (map :id (sort-by :title (get-all-rows))) 0)))
 
 (defn add-node-page []
   (page/html5 (html-page-head "New node")
@@ -146,9 +148,8 @@
                  [:td (html-button-hidden-form "Edit" "edit" id)]]]
     (if-not (= "" (:comm row))
       (seq [[:br] [:font {:color "red"} (newline-to-br (:comm row))] [:br]]))
-    [:br] [:b "Prerequisites"] [:br] ; TODO: alphabetize
+    [:br] [:b "Prerequisites"] [:br]
     (html-recursively-nest-nodes (:prereq row) 0)
-;    (map row-to-html-link (map get-row (:prereq row)))
     [:br] [:b "Description"]
     [:br] "What it is: " (newline-to-br (:desc_is row)) [:br]
     [:br] "What it does: " (newline-to-br (:desc_does row)) [:br]
