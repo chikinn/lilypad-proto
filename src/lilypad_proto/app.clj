@@ -28,6 +28,7 @@
         (.setObject stmt i (.createArrayOf conn elem-type (to-array v)))
         (.setObject stmt i v)))))
 
+
 ;;; LOW-LEVEL FUNCTIONS
 (defn in? [coll elm] (some #(= elm %) coll)) ; SO #3249334
 
@@ -39,6 +40,10 @@
 (defn newline-to-br [text]
   (clojure.string/replace text #"\r\n|\n|\r" "<br />\n"))
 
+(defn add-val-to-vec [value vect] (vec (concat vect (vec [value]))))
+
+(defn remove-val-from-vec [value vect]
+  (vec (filter #(not= (read-string value) %) vect))) ; Unclear on type conv
 
 ;;; FUNCTIONS THAT GENERATE HTML
 (defn html-page-head [title] [:head [:title (str title " - Lilypad")]])
@@ -104,16 +109,18 @@
 (defn edit-node [id form-data]
   (sql/update! DB TABLE_KEY form-data [(str "id = " id)]))
 
+(defn add-prereq [prereq row]
+  (edit-node (:id row) (update row :prereq (partial add-val-to-vec prereq))))
+
+(defn remove-prereq [prereq row]
+  (edit-node (:id row)
+             (update row :prereq (partial remove-val-from-vec prereq))))
+
 (defn delete-node [id] ; TODO: confirmation
   (sql/delete! DB TABLE_KEY [(str "id = " id)])
   ; Remove deleted node from other nodes' prereqs.  Doall prevents laziness.
   (def affected-rows (sql/query DB
     (str "select * from " TABLE " where prereq @> '{" id "}'::smallint[]")))
-  (defn remove-val-from-vec [value vect]
-    (vec (filter #(not= (read-string value) %) vect))) ; Unclear on type conv
-  (defn remove-prereq [prereq row]
-    (edit-node (:id row)
-               (update row :prereq (partial remove-val-from-vec prereq))))
   (doall (map (partial remove-prereq id) affected-rows)))
 
 
@@ -132,12 +139,20 @@
     (html-button-link "Cancel" "")
     [:p] (html-form "add")))
 
+(defn add-new-prereq-page [old-id]
+  (page/html5 (html-page-head "New prereq")
+    [:h2 "NEW PREREQ"]
+    (html-button-link "Cancel" "")
+    [:p] (html-form (str "prereq " old-id))))
+
 (defn edit-node-page [id]
   (page/html5 (html-page-head "Edit node")
     [:h2 "EDIT NODE"]
     [:table [:tr [:td (html-button-link "Cancel" "")] 
                  [:td (html-button-hidden-form "Delete" "process"
-                                               (str "delete " id))]]]
+                                               (str "delete " id))]
+                 [:td (html-button-hidden-form "New Prereq" "prereq"
+                                               (str "prereq " id))]]]
     [:p] (html-form id (str "edit " id))))
 
 (defn node-page [id] ; TODO: add postreqs to bottom
@@ -163,6 +178,9 @@
   (def id        (last  (split task #" "))) ; If task 1 word, id = task-name.
   (case task-name
     "add"    (page/html5 (html-redir (add-node form-data)))
+    "prereq" (let [new-id (add-node form-data) old-node (get-row id)]
+               (add-prereq new-id old-node)
+               (page/html5 (html-redir new-id)))
     "edit"   (do (edit-node id form-data) (page/html5 (html-redir id)))
     "delete" (do (delete-node id) (page/html5 (html-redir "")))))
 
@@ -170,6 +188,7 @@
 (cc/defroutes routes
   (cc/GET  "/"        []                (main-page))
   (cc/GET  "/add"     []                (add-node-page))
+  (cc/POST "/prereq"  [hidden]          (add-new-prereq-page hidden))
   (cc/POST "/edit"    [hidden]          (edit-node-page hidden))
   (cc/POST "/process" [hidden & params] (process-form-page hidden params))
   (cc/GET  "/:id"     [id]              (node-page id)))
