@@ -91,7 +91,7 @@
 
 (defn html-recursively-nest-nodes [node-ids indent-level] 
   (for [row (sort-by :title (map get-row node-ids))]
-    (list (repeat indent-level "&nbsp;")
+    (list (repeat (* indent-level INDENT_SIZE) "&nbsp;")
           (row-to-html-link row)
           ; TODO: Optimal tail-end recursion with recur
           (html-recursively-nest-nodes (:prereq row) (inc indent-level)))))
