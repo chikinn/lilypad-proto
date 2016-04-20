@@ -134,14 +134,6 @@
 ;    (map row-to-html-link (sort-by :title (get-all-rows))) ; No indents
     (html-recursively-nest-nodes (map :id (sort-by :title (get-all-rows))) 0)))
 
-(defn test-page []
-  (page/html5 
-    [:head 
-     [:script {:type "text/x-mathjax-config"}
-       "MathJax.Hub.Config ({tex2jax:  {inlineMath:  [['$','$'],  ['\\(','\\)']]}});"]
-     (page/include-js "mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML")]
-     [:body "$${-b \\pm \\sqrt{b^2-4ac} \\over 2a}$$"]))
-
 (defn add-node-page []
   (page/html5 (html-page-head "New node")
     [:h2 "NEW NODE"]
@@ -166,7 +158,11 @@
 
 (defn node-page [id] ; TODO: add postreqs to bottom
   (def row (get-row id))
-  (page/html5 (html-page-head (:title row))
+  (page/html5 
+    [:head [:title (str (:title row) " - Lilypad")]
+           [:script {:type "text/x-mathjax-config"}
+             "MathJax.Hub.Config ({tex2jax:  {inlineMath:  [['$','$'],  ['\\(','\\)']]}});"]
+           (page/include-js "mathjax/MathJax.js?config=TeX-AMS_CHTML")]
     [:h2 (clojure.string/upper-case (:title row))]
     [:table [:tr [:td (html-button-link "Home" "")] 
                  [:td (html-button-hidden-form "Edit" "edit" id)]]]
@@ -197,7 +193,6 @@
 (cc/defroutes routes
   (route/resources "/")
   (cc/GET  "/"        []                (main-page))
-  (cc/GET  "/test"    []                (test-page))
   (cc/GET  "/add"     []                (add-node-page))
   (cc/POST "/prereq"  [hidden]          (add-new-prereq-page hidden))
   (cc/POST "/edit"    [hidden]          (edit-node-page hidden))
