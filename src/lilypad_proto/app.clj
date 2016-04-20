@@ -1,6 +1,7 @@
 (ns lilypad-proto.app (:require [ring.adapter.jetty :as jetty]
                                 [compojure.core :as cc]
                                 [compojure.handler :as handler]
+                                [compojure.route :as route]
                                 [clojure.java.jdbc :as sql]
                                 [hiccup.page :as page])
                       (:use     [clojure.string :only (split)])
@@ -140,7 +141,9 @@
 ;       "MathJax.Hub.Config ({tex2jax:  {inlineMath:  [['$','$'],  ['\\(','\\)']]}});"]
 ;     [:script {:type "text/javascript" :src "http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"}]]
 ;    [:body "$$x = {-b \\pm \\sqrt{b^2-4ac} \\over 2a}.$$"]))
-     [:script "alert('hello, world')"]]))
+     (page/include-js "/test.js")]
+;     [:script {:type "text/javascript" :src "test.js"}]]
+    [:body [:input {:type "button" :onclick "popup()" :value "hi"}]]))
 
 (defn add-node-page []
   (page/html5 (html-page-head "New node")
@@ -195,6 +198,7 @@
 
 
 (cc/defroutes routes
+  (route/resources "/")
   (cc/GET  "/"        []                (main-page))
   (cc/GET  "/test"    []                (test-page))
   (cc/GET  "/add"     []                (add-node-page))
