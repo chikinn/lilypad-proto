@@ -139,7 +139,7 @@
     [:head 
      [:script {:type "text/x-mathjax-config"}
        "MathJax.Hub.Config ({tex2jax:  {inlineMath:  [['$','$'],  ['\\(','\\)']]}});"]
-     (page/include-js "http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML")]
+     (page/include-js "mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML")]
      [:body "$$x = {-b  2a}.$$"]))
 
 (defn add-node-page []
