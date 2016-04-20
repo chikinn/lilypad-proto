@@ -140,7 +140,7 @@
      [:script {:type "text/x-mathjax-config"}
        "MathJax.Hub.Config ({tex2jax:  {inlineMath:  [['$','$'],  ['\\(','\\)']]}});"]
      (page/include-js "mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML")]
-     [:body "$$x = {-b  2a}.$$"]))
+     [:body "$${-b \\pm \\sqrt{b^2-4ac} \\over 2a}$$"]))
 
 (defn add-node-page []
   (page/html5 (html-page-head "New node")
