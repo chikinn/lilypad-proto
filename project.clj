@@ -6,6 +6,8 @@
                  [ring/ring-jetty-adapter "1.4.0"]
                  [hiccup "1.0.5"]
                  [org.clojure/java.jdbc "0.4.1"]
-                 [org.postgresql/postgresql "9.4-1201-jdbc41"]]
+                 [org.postgresql/postgresql "9.4-1201-jdbc41"]
+                 ;[org.clojure/clojurescript "1.8.40"]
+                 ]
   :main ^:skip-aot lilypad-proto.app
   :profiles {:uberjar {:aot :all}})
