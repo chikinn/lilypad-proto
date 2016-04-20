@@ -137,13 +137,11 @@
 (defn test-page []
   (page/html5 
     [:head 
-;     [:script {:type "text/x-mathjax-config"}
-;       "MathJax.Hub.Config ({tex2jax:  {inlineMath:  [['$','$'],  ['\\(','\\)']]}});"]
-;     [:script {:type "text/javascript" :src "http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"}]]
-;    [:body "$$x = {-b \\pm \\sqrt{b^2-4ac} \\over 2a}.$$"]))
-     (page/include-js "/test.js")]
-;     [:script {:type "text/javascript" :src "test.js"}]]
-    [:body [:input {:type "button" :onclick "popup()" :value "hi"}]]))
+     [:script {:type "text/x-mathjax-config"}
+       "MathJax.Hub.Config ({tex2jax:  {inlineMath:  [['$','$'],  ['\\(','\\)']]}});"]
+     (page/include-js "MathJax.js")
+     [:script {:type "text/javascript" :src "MathJax.js"}]]
+     [:body "$$x = {-b \\pm \\sqrt{b^2-4ac} \\over 2a}.$$"]))
 
 (defn add-node-page []
   (page/html5 (html-page-head "New node")
