@@ -50,7 +50,11 @@
   (vec (filter #(not= (read-string value) %) vect))) ; Unclear on type conv
 
 (defn vectorize [possible-vec]
-  (if (vector? possible-vec) possible-vec [possible-vec]))
+  (if (empty? possible-vec)
+      []
+      (if (vector? possible-vec)
+          possible-vec
+          [possible-vec])))
 
 ;;; FUNCTIONS THAT GENERATE HTML
 (defn html-page-head [title] [:head [:title (str title " - Lilypad")]])
@@ -183,6 +187,7 @@
 
 (defn process-form-page [task raw-form-data]
   ; Ensure that a lone prereq is still a vector (not a string).
+  (.print System/out raw-form-data)
   (def form-data (update raw-form-data :prereq vectorize))
   (def task-name (first (split task #" ")))
   (def id        (last  (split task #" "))) ; If task 1 word, id = task-name.
