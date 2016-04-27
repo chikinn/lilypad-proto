@@ -7,7 +7,7 @@
                  [hiccup "1.0.5"]
                  [org.clojure/java.jdbc "0.4.1"]
                  [org.postgresql/postgresql "9.4-1201-jdbc41"]
-                 [honeysql "0.6.3"]
+;                 [honeysql "0.6.3"]
                  ;[org.clojure/clojurescript "1.8.40"]
                  ]
   :main ^:skip-aot lilypad-proto.app

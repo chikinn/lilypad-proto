@@ -4,9 +4,9 @@
                                 [compojure.route :as route]
                                 [clojure.java.jdbc :as sql]
                                 [hiccup.page :as page]
-                                [honeysql.core :as query]
+;                                [honeysql.core :as query]
 ;                                [honeysql.helpers :refer :all]
-                                )
+)
                       (:use     [clojure.string :only (split)])
                       (:gen-class))
 
@@ -48,6 +48,9 @@
 
 (defn remove-val-from-vec [value vect]
   (vec (filter #(not= (read-string value) %) vect))) ; Unclear on type conv
+
+(defn vectorize [possible-vec]
+  (if (vector? possible-vec) possible-vec [possible-vec]))
 
 ;;; FUNCTIONS THAT GENERATE HTML
 (defn html-page-head [title] [:head [:title (str title " - Lilypad")]])
@@ -107,13 +110,10 @@
 
 
 ;;; HIGH-LEVEL FUNCTIONS
-(defn add-node [form-data]
-  (:id (first (sql/insert! DB TABLE_KEY (update form-data :prereq vec)))))
+(defn add-node [form-data] (:id (first (sql/insert! DB TABLE_KEY form-data))))
 
-;(defn edit-node [id form-data]
-;  (sql/update! DB TABLE_KEY form-data [(str "id = " id)]))
 (defn edit-node [id form-data]
-  (sql/update! DB TABLE_KEY (update form-data :prereq vec) [(str "id = " id)]))
+  (sql/update! DB TABLE_KEY form-data [(str "id = " id)]))
 
 (defn add-prereq [prereq row]
   (edit-node (:id row) (update row :prereq (partial add-val-to-vec prereq))))
@@ -183,7 +183,7 @@
 
 (defn process-form-page [task raw-form-data]
   ; Ensure that a lone prereq is still a vector (not a string).
-  (def form-data (update raw-form-data :prereq vec))
+  (def form-data (update raw-form-data :prereq vectorize))
   (def task-name (first (split task #" ")))
   (def id        (last  (split task #" "))) ; If task 1 word, id = task-name.
   (case task-name
