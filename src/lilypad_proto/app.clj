@@ -3,7 +3,10 @@
                                 [compojure.handler :as handler]
                                 [compojure.route :as route]
                                 [clojure.java.jdbc :as sql]
-                                [hiccup.page :as page])
+                                [hiccup.page :as page]
+                                [honeysql.core :as query]
+;                                [honeysql.helpers :refer :all]
+                                )
                       (:use     [clojure.string :only (split)])
                       (:gen-class))
 
@@ -107,8 +110,10 @@
 (defn add-node [form-data]
   (:id (first (sql/insert! DB TABLE_KEY (update form-data :prereq vec)))))
 
+;(defn edit-node [id form-data]
+;  (sql/update! DB TABLE_KEY form-data [(str "id = " id)]))
 (defn edit-node [id form-data]
-  (sql/update! DB TABLE_KEY form-data [(str "id = " id)]))
+  (sql/update! DB TABLE_KEY (update form-data :prereq vec) [(str "id = " id)]))
 
 (defn add-prereq [prereq row]
   (edit-node (:id row) (update row :prereq (partial add-val-to-vec prereq))))
