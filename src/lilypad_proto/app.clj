@@ -120,11 +120,19 @@
   (sql/update! DB TABLE_KEY form-data [(str "id = " id)]))
 
 (defn add-prereq [prereq row]
-  (edit-node (:id row) (update row :prereq (partial add-val-to-vec prereq))))
+  (edit-node (:id row)
+             (update row :prereq (partial add-val-to-vec prereq)))
+  ; Conversely, also track postreqs.
+  (let [postreq (:id row) old-row (get-row prereq)]
+    (edit-node prereq
+               (update old-row :postreq (partial add-val-to-vec postreq)))))
 
 (defn remove-prereq [prereq row]
   (edit-node (:id row)
-             (update row :prereq (partial remove-val-from-vec prereq))))
+             (update row :prereq (partial remove-val-from-vec prereq)))
+  (let [postreq (:id row) old-row (get-row prereq)]
+    (edit-node prereq ; Analogous to add-prereq
+             (update old-row :postreq (partial remove-val-from-vec postreq)))))
 
 (defn delete-node [id] ; TODO: confirmation
   (sql/delete! DB TABLE_KEY [(str "id = " id)])
