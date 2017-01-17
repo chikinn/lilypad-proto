@@ -7,7 +7,8 @@
 ;                                [honeysql.core :as query]
 ;                                [honeysql.helpers :refer :all]
 )
-                      (:use     [clojure.string :only (split)])
+                      (:use     [clojure.string :only (split)]
+                                [clojure.data])
                       (:gen-class))
 
 (def DB (or (System/getenv "DATABASE_URL")
@@ -41,13 +42,15 @@
 (defn get-row [id]
   (first (sql/query DB (str "select * from " TABLE " where id=" id))))
 
+(defn update-row [id form-data]
+  (sql/update! DB TABLE_KEY form-data [(str "id = " id)]))
+
 (defn newline-to-br [text]
   (clojure.string/replace text #"\r\n|\n|\r" "<br />\n"))
 
-(defn add-val-to-vec [value vect] (vec (concat vect (vec [value]))))
+(defn add-to-vec [value vect] (vec (concat vect (vec [value]))))
 
-(defn remove-val-from-vec [value vect]
-  (vec (filter #(not= (read-string value) %) vect))) ; Unclear on type conv
+(defn remove-from-vec [value vect] (vec (filter #(not= value %) vect)))
 
 (defn vectorize [possible-vec]
   (if (empty? possible-vec)
@@ -114,33 +117,45 @@
 
 
 ;;; HIGH-LEVEL FUNCTIONS
-(defn add-node [form-data] (:id (first (sql/insert! DB TABLE_KEY form-data))))
+(defn add-req [post pre]
+  (update-row post (update (get-row post) :prereq (partial add-to-vec pre)))
+  (update-row pre (update (get-row pre) :postreq (partial add-to-vec post))))
+
+(defn remove-req [post pre]
+  (update-row post
+              (update (get-row post) :prereq (partial remove-from-vec pre)))
+  (update-row pre
+              (update (get-row pre) :postreq (partial remove-from-vec post))))
+
+(defn update-reqs [id new-prereqs old-prereqs]
+  (let [d (diff new-prereqs old-prereqs)]
+    (doall (map (partial add-req id) (remove nil? (first d))))
+    (doall (map (partial remove-req id) (remove nil? (second d))))))
+
+(defn update-postreq [row] ;;;
+  (let [prereqs (:prereq row)]
+    (update-row (:id row) (update row :prereq empty))
+    (doall (map (partial add-req (:id row)) prereqs))))
+
+(defn update-all-postreqs [] ;;;
+  (doall (map update-postreq (get-all-rows))))
+
+(defn add-node [form-data]
+; One-time DB fix!
+  (update-all-postreqs)
+  (let [new-row (first (sql/insert! DB TABLE_KEY (dissoc form-data :prereq)))]
+    (update-reqs (:id new-row) (:prereq form-data) [])
+    (:id new-row)))
 
 (defn edit-node [id form-data]
-  (sql/update! DB TABLE_KEY form-data [(str "id = " id)]))
-
-(defn add-prereq [prereq row]
-  (edit-node (:id row)
-             (update row :prereq (partial add-val-to-vec prereq)))
-  ; Conversely, also track postreqs.
-  (let [postreq (:id row) old-row (get-row prereq)]
-    (edit-node prereq
-               (update old-row :postreq (partial add-val-to-vec postreq)))))
-
-(defn remove-prereq [prereq row]
-  (edit-node (:id row)
-             (update row :prereq (partial remove-val-from-vec prereq)))
-  (let [postreq (:id row) old-row (get-row prereq)]
-    (edit-node prereq ; Analogous to add-prereq
-             (update old-row :postreq (partial remove-val-from-vec postreq)))))
+  (let [old-prereqs (:prereq (get-row id))]
+    (update-row id (dissoc form-data :prereq))
+    (update-reqs id (:prereq form-data) old-prereqs)))
 
 (defn delete-node [id] ; TODO: confirmation
-  (sql/delete! DB TABLE_KEY [(str "id = " id)])
-  ; Remove deleted node from other nodes' prereqs.  Doall prevents laziness.
-  (def affected-rows (sql/query DB
-    (str "select * from " TABLE " where prereq @> '{" id "}'::smallint[]")))
-  (doall (map (partial remove-prereq id) affected-rows)))
-
+  (update-reqs id [] (:prereq (get-row id)))
+  (doall (map #(remove-req %1 id) (:postreq (get-row id)))) ; Like partial
+  (sql/delete! DB TABLE_KEY [(str "id = " id)]))
 
 ;;; FUNCTIONS THAT GENERATE COMPLETE WEB PAGES
 (defn main-page []
@@ -149,7 +164,8 @@
     (html-button-link "New Node" "add")
     [:p] 
 ;    (map row-to-html-link (sort-by :title (get-all-rows))) ; No indents
-    (html-recursively-nest-nodes (map :id (sort-by :title (get-all-rows))) 0)))
+    (let [vis-rows (filter (comp empty? :postreq) (get-all-rows))] ; No postreq
+      (html-recursively-nest-nodes (map :id (sort-by :title vis-rows)) 0))))
 
 (defn add-node-page []
   (page/html5 (html-page-head "New node")
@@ -195,14 +211,13 @@
 
 (defn process-form-page [task raw-form-data]
   ; Ensure that a lone prereq is still a vector (not a string).
-  (.print System/out raw-form-data)
   (def form-data (update raw-form-data :prereq vectorize))
   (def task-name (first (split task #" ")))
   (def id        (last  (split task #" "))) ; If task 1 word, id = task-name.
   (case task-name
     "add"    (page/html5 (html-redir (add-node form-data)))
-    "prereq" (let [new-id (add-node form-data) old-node (get-row id)]
-               (add-prereq new-id old-node)
+    "prereq" (let [new-id (add-node form-data)]
+               (add-req id new-id)
                (page/html5 (html-redir new-id)))
     "edit"   (do (edit-node id form-data) (page/html5 (html-redir id)))
     "delete" (do (delete-node id) (page/html5 (html-redir "")))))
