@@ -137,12 +137,11 @@
     (update-row (:id row) (update row :prereq empty))
     (doall (map (partial add-req (:id row)) prereqs))))
 
+; (update-all-postreqs) ; One-time DB fix!
 (defn update-all-postreqs [] ;;;
   (doall (map update-postreq (get-all-rows))))
 
 (defn add-node [form-data]
-; One-time DB fix!
-  (update-all-postreqs)
   (let [new-row (first (sql/insert! DB TABLE_KEY (dissoc form-data :prereq)))]
     (update-reqs (:id new-row) (:prereq form-data) [])
     (:id new-row)))
