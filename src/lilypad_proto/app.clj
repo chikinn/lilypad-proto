@@ -8,7 +8,8 @@
 ;                                [honeysql.helpers :refer :all]
 )
                       (:use     [clojure.string :only (split)]
-                                [clojure.data])
+                                [clojure.data]
+                                [hiccup.core])
                       (:gen-class))
 
 (def DB (or (System/getenv "DATABASE_URL")
@@ -67,14 +68,21 @@
 (defn html-button-link [text target]
   [:button {:onclick (str "location.href='/" target "'")} text])
 
-(defn html-multiselect [field-name values texts defaults]
+(defn html-multiselect [field-name values texts defaults] ; TODO: Rename
   (defn default? [defaults value] (in? defaults value))
-  (defn html-option [value text is-default]
-    (if is-default [:option {:value value :selected ""} text]
-                   [:option {:value value} text]))
+  (defn html-check [value text is-default] ; TODO: Clean up
+    (if is-default
+      (html
+        [:input {:id value :type "checkbox" :name field-name :value value :checked ""}]
+        [:label {:for value} text]
+        [:br])
+      (html
+        [:input {:id value :type "checkbox" :name field-name :value value}]
+        [:label {:for value} text]
+        [:br])))
   (def is-defaults (map (partial default? defaults) values))
-  [:select {:multiple "" :name field-name}
-    (map html-option values texts is-defaults)])
+  [:div {:style "height: 20em; width: 12em; overflow: auto;"}
+    (map html-check values texts is-defaults)])
 
 (defn html-form ([hidden] (html-form -1 hidden)) ([id hidden] 
   (def all-rows (sort-by :title (get-all-rows))) ; Sort for multiselect.
