@@ -205,7 +205,9 @@
            (page/include-js "mathjax/MathJax.js?config=TeX-AMS_CHTML")]
     [:h2 (clojure.string/upper-case (:title row))]
     [:table [:tr [:td (html-button-link "Home" "")] 
-                 [:td (html-button-hidden-form "Edit" "edit" id)]]]
+                 [:td (html-button-hidden-form "Edit" "edit" id)]
+                 [:td (html-button-hidden-form "New Prereq" "prereq"
+                                               (str "prereq " id))]]]
     (if-not (= "" (:comm row))
       (seq [[:br] [:font {:color "red"} (newline-to-br (:comm row))] [:br]]))
     [:br] [:b "Prerequisites"] [:br]
